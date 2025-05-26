@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trail Race Protocol Timeline</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F7FAFC; /* Lighter gray background */
+        }
+        .timeline-container {
+            position: relative;
+            margin-left: 6rem; /* Adjusted for potentially longer labels */
+        }
+        .timeline-item {
+            display: flex;
+            position: relative;
+            margin-bottom: 3rem; 
+        }
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+        .timeline-axis {
+            position: absolute;
+            left: -6rem; /* Adjusted for new margin */
+            width: 5.5rem; /* Adjusted for new margin */
+            text-align: right;
+            top: -0.25rem; 
+        }
+        .timeline-week-label {
+            font-size: 0.875rem; /* 14px */
+            font-weight: 600;
+            color: #2D3748; /* Slate 800 */
+            text-transform: uppercase;
+            line-height: 1.75rem; 
+        }
+        .timeline-marker-container {
+            position: relative;
+            z-index: 10;
+        }
+        .timeline-marker {
+            width: 2rem; /* 32px */
+            height: 2rem; /* 32px */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 0 4px #F7FAFC, 0 1px 3px rgba(0,0,0,0.1); 
+        }
+        .timeline-marker svg {
+            width: 1rem; /* 16px */
+            height: 1rem; /* 16px */
+            color: white; /* Ensuring icons are white for contrast */
+        }
+        .timeline-line {
+            position: absolute;
+            left: 1rem; 
+            top: 2rem; 
+            bottom: -3rem; 
+            width: 4px; 
+            background-color: #718096; /* Slate 500 - Darker, more prominent line */
+        }
+        .timeline-item:last-child .timeline-line {
+            display: none;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1.75rem; 
+            margin-left: 2rem; 
+            flex-grow: 1;
+            border-left-width: 5px;
+        }
+        .card-title {
+            font-size: 1.25rem; 
+            font-weight: 600;
+            margin-bottom: 0.75rem; 
+        }
+        .card-content p, .card-content ul {
+            color: #4A5568; 
+            font-size: 0.9375rem; 
+        }
+        .card-content p {
+            margin-bottom: 0.75rem;
+        }
+        .card-content ul {
+            list-style-type: disc;
+            padding-left: 1.25rem;
+        }
+        .card-content li {
+            margin-bottom: 0.375rem; 
+        }
+        .icon {
+            width: 1.125em;
+            height: 1.125em;
+            display: inline-block;
+            vertical-align: -0.2em;
+            margin-right: 0.375rem;
+        }
+
+        /* New Countdown Color Scheme for Markers, Card Borders, and Card Titles */
+        .marker-sky { background-color: #38BDF8; } .border-sky-500 { border-left-color: #0EA5E9; } .text-sky-700 { color: #0369A1; }
+        .marker-cyan { background-color: #22D3EE; } .border-cyan-500 { border-left-color: #06B6D4; } .text-cyan-700 { color: #0891B2; }
+        .marker-teal { background-color: #2DD4BF; } .border-teal-500 { border-left-color: #14B8A6; } .text-teal-700 { color: #0D9488; }
+        .marker-emerald { background-color: #34D399; } .border-emerald-500 { border-left-color: #10B981; } .text-emerald-700 { color: #059669; }
+        .marker-yellow { background-color: #FACC15; } .border-yellow-500 { border-left-color: #EAB308; } .text-yellow-700 { color: #A16207; }
+        .marker-amber { background-color: #F59E0B; } .border-amber-500 { border-left-color: #D97706; } .text-amber-700 { color: #B45309; }
+        .marker-orange { background-color: #F97316; } .border-orange-500 { border-left-color: #EA580C; } .text-orange-700 { color: #C2410C; }
+        .marker-red { background-color: #EF4444; } .border-red-500 { border-left-color: #DC2626; } .text-red-700 { color: #B91C1C; }
+        .marker-red-600 { background-color: #DC2626; } .border-red-600 { border-left-color: #B91C1C; } .text-red-800 { color: #991B1B; }
+        .marker-rose { background-color: #F43F5E; } .border-rose-600 { border-left-color: #E11D48; } .text-rose-800 { color: #9F1239; }
+        .marker-indigo { background-color: #6366F1; } .border-indigo-500 { border-left-color: #4F46E5; } .text-indigo-700 { color: #4338CA; }
+
+
+        body::before {
+            content: ""; position: fixed; left: 0; top: 0; width: 100%; height: 100%;
+            z-index: -1; opacity: 0.03;
+            background-image: url('https://www.transparenttextures.com/patterns/subtle-carbon.png');
+        }
+
+        .modal { transition: opacity 0.25s ease; }
+        .modal-content { transition: transform 0.25s ease; }
+
+        .styled-button {
+            color: white; padding: 0.625rem 1.25rem; border-radius: 0.5rem;
+            font-weight: 500; transition: background-color 0.2s, box-shadow 0.2s;
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            margin-top: 1rem;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+        }
+        .styled-button:hover {
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+        .gemini-button { background-color: #4F46E5; }
+        .gemini-button:hover { background-color: #4338CA; }
+        .download-button { background-color: #059669; }
+        .download-button:hover { background-color: #047857; }
+        .gemini-option-button {
+            padding: 0.5rem 1rem; margin-top: 0.75rem; margin-right: 0.5rem;
+        }
+        .gemini-option-button.performance { background-color: #0EA5E9; }
+        .gemini-option-button.performance:hover { background-color: #0284C7; }
+        .gemini-option-button.recovery { background-color: #EC4899; }
+        .gemini-option-button.recovery:hover { background-color: #DB2777; }
+
+        .spinner {
+            border: 4px solid rgba(0,0,0,0.1); width: 36px; height: 36px;
+            border-radius: 50%; border-left-color: #4F46E5;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #customTravelListContent {
+            max-height: 300px; overflow-y: auto; border: 1px solid #E5E7EB;
+            padding: 1rem; border-radius: 0.5rem; background-color: #F9FAFB;
+            white-space: pre-wrap; font-size: 0.9375rem; color: #374151;
+        }
+        #customTravelListContent h3 { font-size: 1.125rem; font-weight: 600; color: #1F2937; margin-bottom: 0.5rem;}
+        #customTravelListContent ul { list-style-position: inside; padding-left: 0.5rem;}
+    </style>
+</head>
+<body class="py-10 px-4 md:px-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-16 text-center">
+            <svg class="w-20 h-20 mx-auto mb-4 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" />
+            </svg>
+            <h1 class="text-5xl font-bold text-gray-800 mb-3">Trail Race Protocol</h1>
+            <p class="text-xl text-gray-600">Your Countdown to Peak Performance!</p>
+        </header>
+
+        <div class="timeline-container">
+            <div class="timeline-item">
+                <div class="timeline-axis">
+                    <div class="timeline-week-label">12-8 Weeks From Race</div>
+                </div>
+                <div class="timeline-marker-container">
+                    <div class="timeline-marker marker-sky">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM1.49 15.326a.78.78 0 0 1-.358-.442 3 3 0 0 1 4.308-3.516 6.484 6.484 0 0 0-1.905 3.959c-.023.222-.015.442.028.658a.79.79 0 0 1-.582.78A5.953 5.953 0 0 1 1.49 15.326ZM16 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm.78 2.082a.78.78 0 0 1-.358.442 3 3 0 0 1-4.308 3.516C6.036 18.028 5.545 16.018 5.5 14c.044-.59.166-1.168.358-1.715a.79.79 0 0 1 .582-.78A5.953 5.953 0 0 1 12.78 16.082Z" /></svg>
+                    </div>
+                    <div class="timeline-line"></div>
+                </div>
+                <div class="card border-sky-500">
+                    <h2 class="card-title text-sky-700">Foundation & Planning</h2>
+                    <div class="card-content">
+                        <p><strong>Nutrition Chat:</strong></p>
+                        <ul>
+                            <li>Discuss race plan and any other concerns.</li>
+                            <li>Review athlete history, training load, illness.</li>
+                            <li>Analyze example training days.</li>
+                            <li>Establish secondary measures (e.g., mood, energy, sleep).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-axis">
+                    <div class="timeline-week-label">8 Weeks From Race</div>
+                </div>
+                <div class="timeline-marker-container">
+                    <div class="timeline-marker marker-cyan">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm0 5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm9.665-2.425a.75.75 0 0 1-.22.53l-1.75 1.75a.75.75 0 1 1-1.06-1.06l1.75-1.75a.75.75 0 0 1 1.28.53ZM2.585 7.575a.75.75 0 0 1 .53.22l1.75 1.75a.75.75 0 1 1-1.06 1.06L2.055 8.855a.75.75 0 0 1 .53-1.28Zm14.83 4.85a.75.75 0 0 1 .53.22l1.75 1.75a.75.75 0 1 1-1.06 1.06l-1.75-1.75a.75.75 0 0 1 .53-1.28ZM3.645 12.425a.75.75 0 0 1 .22-.53l1.75-1.75a.75.75 0 1 1 1.06 1.06L4.925 13.025a.75.75 0 0 1-1.28-.53Z" clip-rule="evenodd" /></svg>
+                    </div>
+                    <div class="timeline-line"></div>
+                </div>
+                <div class="card border-cyan-500">
+                    <h2 class="card-title text-cyan-700">Meal Plan & Assessment</h2>
+                    <div class="card-content">
+                        <ul>
+                            <li>Send personalized meal plan.</li>
+                            <li>Conduct gut health assessment.</li>
+                            <li>Review and track secondary measures.</li>
+                        </ul>
+                        <button id="getPerfRecMealOptionsBtn" class="styled-button gemini-button">
+                           <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M15.5 2A1.5 1.5 0 0 0 14 3.5v13a1.5 1.5 0 0 0 1.5 1.5h.053a1.5 1.5 0 0 0 1.447-1.834l-1.581-6.324a.75.75 0 0 1 .21-.659L17.415 7.4a.75.75 0 0 0-.243-1.034L16 5.57V3.5A1.5 1.5 0 0 0 15.5 2Zm-3.5 0A1.5 1.5 0 0 0 10.5 3.5v3.072l-2.07-.959a.75.75 0 0 0-.93.233L4.73 9.965a.75.75 0 0 0 .21.99l2.562 2.135a.75.75 0 0 1 .28.561l-.503 3.016a1.5 1.5 0 0 0 2.03 1.626L12 16.93v1.57A1.5 1.5 0 0 0 13.5 20h.053a1.5 1.5 0 0 0 1.447-1.834l-1.581-6.324a.75.75 0 0 1 .21-.659L15.915 9.4a.75.75 0 0 0-.243-1.034L14.5 7.57V3.5A1.5 1.5 0 0 0 13.5 2h-1.5Z" /></svg>
+                            Performance/Recovery Meal Options
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-axis">
+                    <div class="timeline-week-label">6 Weeks From Race</div>
+                </div>
+                <div class="timeline-marker-container">
+                    <div class="timeline-marker marker-teal">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2.25 2A1.75 1.75 0 0 0 .5 3.75v12.5c0 .966.784 1.75 1.75 1.75h15.5A1.75 1.75 0 0 0 19.5 16.25V3.75A1.75 1.75 0 0 0 17.75 2H2.25ZM3 6.5a.75.75 0 0 1 .75-.75h12.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 6.5ZM3 10a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd" /></svg>
+                    </div>
+                    <div class="timeline-line"></div>
+                </div>
+                <div class="card border-teal-500">
+                    <h2 class="card-title text-teal-700">Race Simulation & Gut Training</h2>
+                    <div class="card-content">
+                        <ul>
+                            <li>Develop and test initial race nutrition plan.</li>
+                            <li>Begin gut training protocols (practicing race nutrition).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-axis">
+                    <div class="timeline-week-label">4 Weeks From Race</div>
+                </div>
+                <div class="timeline-marker-container">
+                    <div class="timeline-marker marker-emerald">
+                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM10 15a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM5.125 5.342a1.5 1.5 0 1 1 2.558-1.508 1.5 1.5 0 0 1-2.558 1.508ZM14.875 5.342a1.5 1.5 0 1 0-2.558-1.508 1.5 1.5 0 0 0 2.558 1.508ZM5.125 14.658a1.5 1.5 0 1 1 2.558 1.508 1.5 1.5 0 0 1-2.558-1.508ZM14.875 14.658a1.5 1.5 0 1 0-2.558 1.508 1.5 1.5 0 0 0 2.558 1.508Z" /></svg>
+                    </div>
+                    <div class="timeline-line"></div>
+                </div>
+                <div class="card border-emerald-500">
+                    <h2 class="card-title text-emerald-700">Adaptation & Refinement</h2>
+                    <div class="card-content">
+                        <ul>
+                            <li>Implement heat training strategies if applicable.</li>
+                            <li>Revise race nutrition plan based on testing and adaptation.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-axis">
+                    <div class="timeline-week-label">3 Weeks From Race</div>
+                </div>
+                <div class="timeline-marker-container">
+                    <div class="timeline-marker marker-yellow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clip-rule="evenodd" /></svg>
+                    </div>
+                    <div class="timeline-line"></div>
+                </div>
+                <div class="card border-yellow-500">
+                    <h2 class="card-title text-yellow-700">Compliance & Bicarb Testing</h2>
+                    <div class="card-content">
+                        <ul>
+                            <li>Provide anti-doping education handout.</li>
+                            <li>Begin sodium bicarbonate testing (if planned).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-axis">
+                    <div class="timeline-week-label">2 Weeks From Race</div>
+                </div>
+                <div class="timeline-marker-container">
+                    <div class="timeline-marker marker-amber">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.403 12.652a3 3 0 0 0 0-5.304 3 3 0 0 0-3.75-3.751 3 3 0 0 0-5.305 0 3 3 0 0 0-3.751 3.75 3 3 0 0 0 0 5.305 3 3 0 0 0 3.75 3.751 3 3 0 0 0 5.305 0 3 3 0 0 0 3.751-3.75Zm-2.546-4.46a.75.75 0 0 0-1.214-.883l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg>
+                    </div>
+                    <div class="timeline-line"></div>
+                </div>
+                <div class="card border-amber-500"> <h2 class="card-title text-amber-700">Final Checks & Logistics</h2>
+                    <div class="card-content">
+                        <ul>
+                            <li>Catch-up meeting.</li>
+                            <li>Send safe travel, sleep, and hygiene plan.</li>
+                            <li>Discuss and brief on cooling strategies.</li>
+                            <li>Send travel pack (e.g., specific snacks, supplements).</li>
+                        </ul>
+                         <button id="getIllnessPreventionBtn" class="styled-button gemini-button">
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.455 2.508a.75.75 0 0 0-.91 0l-.628.579A3.75 3.75 0 0 0 5.25 5.54L4.01 7.837a2.25 2.25 0 0 0-.01 2.325l1.24 2.293a3.75 3.75 0 0 0 .663 2.012l.628.58a.75.75 0 0 0 .91 0l.628-.58a3.75 3.75 0 0 0 .663-2.012l1.24-2.293a2.25 2.25 0 0 0-.01-2.325L8.748 5.54a3.75 3.75 0 0 0-.663-2.012l-.63-.579Zm5 0a.75.75 0 0 0-.91 0l-.628.579A3.75 3.75 0 0 0 10.25 5.54L9.01 7.837a2.25 2.25 0 0 0-.01 2.325l1.24 2.293a3.75 3.75 0 0 0 .663 2.012l.628.58a.75.75 0 0 0 .91 0l.628-.58a3.75 3.75 0 0 0 .663-2.012l1.24-2.293a2.25 2.25 0 0 0-.01-2.325L13.748 5.54a3.75 3.75 0 0 0-.663-2.012l-.63-.579Z" clip-rule="evenodd" /></svg>
+                            Staying Safe from Illness
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                 <div class="timeline-axis">
+                    <div class="timeline-week-label">Race Week</div>
+                </div>
+                <div class="timeline-marker-container">
+                    <div class="timeline-marker marker-orange">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2.5a.75.75 0 0 1 .75.75v.255a5.994 5.994 0 0 1 4.477 2.035l.207-.117a.75.75 0 0 1 .866 1.3L15.5 7.58a6 6 0 0 1 0 4.84l.803.453a.75.75 0 0 1-.866 1.3l-.207-.117a5.994 5.994 0 0 1-4.477 2.035v.255a.75.75 0 0 1-1.5 0v-.255a5.994 5.994 0 0 1-4.477-2.035l-.207.117a.75.75 0 0 1-.866-1.3L4.5 12.42a6 6 0 0 1 0-4.84l-.803-.453a.75.75 0 0 1 .866-1.3l.207.117A5.994 5.994 0 0 1 9.25 3.505V3.25A.75.75 0 0 1 10 2.5ZM8.5 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    </div>
+                    <div class="timeline-line"></div>
+                </div>
+                <div class="card border-orange-500"> <h2 class="card-title text-orange-700">Sharpening & Final Prep</h2>
+                    <div class="card-content">
+                        <ul>
+                            <li>Remove non-essential supplements.</li>
+                            <li>Plan training taper.</li>
+                            <li>Focus on a mixed diet meeting specific nutrition needs.</li>
+                            <li>Test carb load strategy and breakfast plan.</li>
+                            <li>Keep carbohydrate intake high, but within the normal dietary pattern.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-axis">
+                    <div class="timeline-week-label">RD - 48hrs</div>
+                </div>
+                <div class="timeline-marker-container">
+                    <div class="timeline-marker marker-red">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z" clip-rule="evenodd" /></svg>
+                    </div>
+                    <div class="timeline-line"></div>
+                </div>
+                <div class="card border-red-500"> <h2 class="card-title text-red-700">Low Residue & Briefing</h2>
+                    <div class="card-content">
+                        <ul>
+                            <li>Implement low residue meal plan.</li>
+                            <li>Review race nutrition plan.</li>
+                            <li>Final briefing.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-axis">
+                    <div class="timeline-week-label">RD - 24hrs</div>
+                </div>
+                <div class="timeline-marker-container">
+                    <div class="timeline-marker marker-red-600"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg>
+                    </div>
+                    <div class="timeline-line"></div>
+                </div>
+                <div class="card border-red-600"> <h2 class="card-title text-red-800">Carb Load & Final Prep</h2>
+                    <div class="card-content">
+                        <ul>
+                            <li>Continue low residue diet.</li>
+                            <li>Implement carbohydrate loading strategy.</li>
+                            <li>Sodium bicarbonate loading (if planned).</li>
+                            <li>Hyperhydrate if necessary.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-axis">
+                    <div class="timeline-week-label">Race Day!</div>
+                </div>
+                <div class="timeline-marker-container">
+                    <div class="timeline-marker marker-rose"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M3.5 2.75a.75.75 0 0 0-1.5 0v14.5a.75.75 0 0 0 1.5 0v-1.25h10v2.25a.75.75 0 0 0 1.5 0V6.356A3.001 3.001 0 0 0 12.502 3.5H3.5V2.75Z" /></svg>
+                    </div>
+                    <div class="timeline-line"></div>
+                </div>
+                <div class="card border-rose-600"> <h2 class="card-title text-rose-800">Execution!</h2>
+                    <div class="card-content">
+                        <ul>
+                            <li>Pre-race breakfast (tested).</li>
+                            <li>Final sodium bicarbonate dose (if planned).</li>
+                            <li>Caffeine intake (if planned).</li>
+                            <li>Review race nutrition plan one last time.</li>
+                            <li><strong>RACE!</strong></li>
+                            <li>Implement recovery plan immediately post-race.</li>
+                            <li>Utilize cooling strategies.</li>
+                        </ul>
+                        <button id="getMotivationBtn" class="styled-button gemini-button">
+                           <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg>
+                           Race Day Motivation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-axis">
+                    <div class="timeline-week-label">Post-Race</div>
+                </div>
+                <div class="timeline-marker-container">
+                    <div class="timeline-marker marker-indigo"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="m5.213 3.245 3.362 3.362 2.53-2.53A.75.75 0 0 1 12.17 5.14l-2.53 2.53 3.362 3.362a3.751 3.751 0 0 1-5.304 5.304L4.362 9.974a3.75 3.75 0 0 1 5.304-5.303l.547-.547c.246-.246.38-.58.38-.932a.751.751 0 0 1-.22-.531Z" /><path d="M14.787 16.755a3.751 3.751 0 0 1-5.304-5.304L15.845 5.09a.75.75 0 0 1 1.06 1.061L10.543 12.51a3.75 3.75 0 0 1-5.303 5.304l-.547.547a.75.75 0 0 1-.932-.38.751.751 0 0 1-.531.22Z" /></svg>
+                    </div>
+                    </div>
+                <div class="card border-indigo-500"> <h2 class="card-title text-indigo-700">Recovery & Restoration</h2>
+                    <div class="card-content">
+                        <ul>
+                            <li>Restore fluid balance.</li>
+                            <li>Replenish glycogen stores.</li>
+                            <li>Increase protein intake for muscle repair.</li>
+                        </ul>
+                        <button id="getImmediateRecoveryMealsBtn" class="styled-button gemini-button">
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a.75.75 0 0 1 .688.462l1.818 3.636 3.996.58a.75.75 0 0 1 .416 1.28l-2.89 2.817.682 3.98a.75.75 0 0 1-1.088.791L10 13.347l-3.57 1.877a.75.75 0 0 1-1.088-.79l.682-3.98-2.89-2.817a.75.75 0 0 1 .416-1.28l3.996-.58L9.313 2.462A.75.75 0 0 1 10 2Z" clip-rule="evenodd" /></svg>
+                            Suggest Immediate Recovery Meals
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="contentModal" class="modal fixed inset-0 z-50 overflow-y-auto bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="modal-content bg-white rounded-lg shadow-xl p-6 w-full max-w-xl transform scale-95">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="modalTitle" class="text-2xl font-semibold text-gray-800">Modal Title</h3>
+                <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="modalDietaryInputArea" class="mb-4 hidden">
+                 <label for="dietaryNotes" class="block text-sm font-medium text-gray-700 mb-1">Additional Dietary Notes/Preferences (optional):</label>
+                 <textarea id="dietaryNotes" rows="2" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"></textarea>
+                 <div id="mealOptionButtons" class="mt-3 flex flex-wrap gap-2"></div>
+            </div>
+            <div id="modalCustomContentArea" class="mb-4 hidden">
+                <div id="customTravelListContent" class="prose max-w-none">
+                    <h3>Key Hygiene Practices:</h3>
+                    <ul>
+                        <li><strong>Hand Washing:</strong> Frequently wash hands with soap and water for at least 20 seconds, especially before eating, after using the restroom, and after being in public spaces.</li>
+                        <li><strong>Hand Sanitizer:</strong> Use an alcohol-based hand sanitizer (at least 60% alcohol) if soap and water are not readily available. Apply thoroughly.</li>
+                        <li><strong>Avoid Touching Face:</strong> Make a conscious effort to avoid touching your eyes, nose, and mouth, as this is a primary way germs enter the body.</li>
+                        <li><strong>Respiratory Etiquette:</strong> Cover your mouth and nose with a tissue or your elbow when coughing or sneezing. Dispose of tissues properly.</li>
+                    </ul>
+                    <h3>Food and Water Safety:</h3>
+                    <ul>
+                        <li><strong>Safe Water Sources:</strong> Drink bottled water or water you know is purified, especially in areas where tap water quality is uncertain. Avoid ice in drinks if unsure of the water source.</li>
+                        <li><strong>Well-Cooked Food:</strong> Eat food that is thoroughly cooked and served hot. Be cautious with raw fruits and vegetables; peel them yourself or ensure they are washed with safe water.</li>
+                        <li><strong>Reputable Vendors:</strong> Choose food vendors and restaurants that appear clean and have good hygiene practices. Street food can be risky if not prepared carefully.</li>
+                    </ul>
+                    <h3>Environmental & Personal Measures:</h3>
+                    <ul>
+                        <li><strong>Masks:</strong> Consider wearing a high-quality mask in crowded indoor public spaces, on airplanes, or public transport, especially during peak illness seasons.</li>
+                        <li><strong>Personal Space:</strong> Where possible, maintain some distance from individuals who are obviously unwell.</li>
+                        <li><strong>Sleep & Rest:</strong> Ensure adequate sleep before and during travel, as fatigue can weaken the immune system.</li>
+                        <li><strong>Vaccinations & Medications:</strong> Check if any travel-specific vaccinations or prophylactic medications are recommended for your destination well in advance of your trip. Pack a small first-aid kit with essentials like pain relievers, antiseptic wipes, and any personal medications.</li>
+                    </ul>
+                     <p class="text-sm text-gray-600 mt-3"><em>This list is a general guide. Consult with a healthcare professional for personalized travel health advice.</em></p>
+                </div>
+                <button id="downloadCustomListBtn" class="styled-button download-button mt-4">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" /><path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" /></svg>
+                    Download List
+                </button>
+            </div>
+            <div id="modalLoading" class="text-center py-6 hidden">
+                <div class="spinner mx-auto"></div>
+                <p class="mt-3 text-gray-600">Generating insights...</p>
+            </div>
+            <div id="modalResponseArea" class="text-gray-700 prose-sm sm:prose max-w-none whitespace-pre-wrap"></div>
+             <div id="modalErrorArea" class="text-red-600 mt-3 p-3 bg-red-50 border border-red-300 rounded-md hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        const contentModal = document.getElementById('contentModal');
+        const modalTitleEl = document.getElementById('modalTitle');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const modalResponseArea = document.getElementById('modalResponseArea');
+        const modalLoading = document.getElementById('modalLoading');
+        const modalErrorArea = document.getElementById('modalErrorArea');
+        const modalDietaryInputArea = document.getElementById('modalDietaryInputArea');
+        const dietaryNotesInput = document.getElementById('dietaryNotes');
+        const mealOptionButtonsContainer = document.getElementById('mealOptionButtons');
+        const modalCustomContentArea = document.getElementById('modalCustomContentArea');
+        const customTravelListContent = document.getElementById('customTravelListContent');
+        const downloadCustomListBtn = document.getElementById('downloadCustomListBtn');
+
+        async function callGeminiApi(prompt) {
+            modalResponseArea.innerHTML = '';
+            modalErrorArea.classList.add('hidden');
+            modalErrorArea.textContent = '';
+            modalCustomContentArea.classList.add('hidden');
+            modalDietaryInputArea.classList.add('hidden');
+            modalLoading.classList.remove('hidden');
+            modalResponseArea.classList.add('hidden');
+
+            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = { contents: chatHistory };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API request failed: ${errorData.error?.message || response.status}`);
+                }
+                const result = await response.json();
+                if (result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
+                    let text = result.candidates[0].content.parts[0].text;
+                    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                    text = text.replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold mt-2 mb-1">$1</h3>');
+                    text = text.replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold mt-3 mb-1">$1</h2>');
+                    text = text.replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-4 mb-2">$1</h1>');
+                    text = text.replace(/^\s*-\s(.*?)$/gm, (match, content) => `<ul><li class="ml-4 list-disc">${content}</li></ul>`);
+                    text = text.replace(/^\s*\d+\.\s(.*?)$/gm, (match, content) => `<ol><li class="ml-4 list-decimal">${content}</li></ol>`);
+                    text = text.replace(/\n/g, '<br>');
+                    text = text.replace(/<\/ul>\s*<ul>/g, ''); 
+                    text = text.replace(/<\/ol>\s*<ol>/g, ''); 
+                    modalResponseArea.innerHTML = text;
+                    modalResponseArea.classList.remove('hidden');
+                } else {
+                    throw new Error('Invalid API response structure.');
+                }
+            } catch (error) {
+                console.error('Error calling Gemini API:', error);
+                modalErrorArea.textContent = `Error: ${error.message}`;
+                modalErrorArea.classList.remove('hidden');
+                modalResponseArea.innerHTML = '<p>Sorry, something went wrong.</p>';
+                modalResponseArea.classList.remove('hidden');
+            } finally {
+                modalLoading.classList.add('hidden');
+            }
+        }
+
+        function openContentModal(title, type) {
+            modalTitleEl.textContent = title;
+            modalResponseArea.innerHTML = '';
+            modalResponseArea.classList.add('hidden');
+            modalErrorArea.classList.add('hidden');
+            dietaryNotesInput.value = '';
+            mealOptionButtonsContainer.innerHTML = '';
+            modalDietaryInputArea.classList.add('hidden');
+            modalCustomContentArea.classList.add('hidden');
+            modalLoading.classList.add('hidden');
+
+            if (type === 'mealOptions') {
+                modalDietaryInputArea.classList.remove('hidden');
+            } else if (type === 'customList') {
+                modalCustomContentArea.classList.remove('hidden');
+            }
+
+            contentModal.classList.remove('hidden');
+            contentModal.classList.add('flex');
+            requestAnimationFrame(() => {
+                contentModal.style.opacity = '1';
+                contentModal.querySelector('.modal-content').style.transform = 'scale(1)';
+            });
+        }
+
+        function closeModal() {
+            contentModal.style.opacity = '0';
+            contentModal.querySelector('.modal-content').style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                contentModal.classList.add('hidden');
+                contentModal.classList.remove('flex');
+            }, 250);
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        contentModal.addEventListener('click', (event) => {
+            if (event.target === contentModal) closeModal();
+        });
+
+        function downloadTextFile(filename, text) {
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        downloadCustomListBtn.addEventListener('click', () => {
+            const listContent = customTravelListContent.innerText;
+            downloadTextFile('Staying-Safe-From-Illness-Checklist.txt', listContent);
+        });
+
+        document.getElementById('getPerfRecMealOptionsBtn').addEventListener('click', () => {
+            openContentModal('✨ Performance & Recovery Meal Options', 'mealOptions');
+            const createMealButton = (text, typeClass, promptGenerator) => {
+                const button = document.createElement('button');
+                button.textContent = text;
+                button.className = `styled-button gemini-option-button ${typeClass}`;
+                button.onclick = () => {
+                    const notes = dietaryNotesInput.value.trim();
+                    const prompt = promptGenerator(notes);
+                    callGeminiApi(prompt);
+                };
+                mealOptionButtonsContainer.appendChild(button);
+            };
+            createMealButton('Get Performance Meal Plan', 'performance', (notes) => {
+                let p = "Generate a sample one-day meal plan (breakfast, lunch, dinner, and 2 snacks) for an athlete in a heavy training block, 8 weeks out from a trail race. This meal plan should prioritize high carbohydrate intake and be lower in fibre to optimize energy for performance and minimize digestive issues during intense workouts. If possible, provide approximate carbohydrate targets or portion size guidance.";
+                if (notes) p += ` Consider these additional dietary notes/preferences: ${notes}.`;
+                p += " Please format the response clearly, using headings for meals and snacks, and bullet points for items within them.";
+                return p;
+            });
+            createMealButton('Get Recovery Meal Plan', 'recovery', (notes) => {
+                let p = "Generate a sample one-day meal plan (breakfast, lunch, dinner, and 2 snacks) for an athlete focusing on recovery between training sessions, 8 weeks out from a trail race. This meal plan should be higher in protein for muscle repair and contain medium to high carbohydrates to replenish glycogen. It can include more fibre than performance-focused meals. If possible, provide approximate protein/carb targets or portion size guidance.";
+                if (notes) p += ` Consider these additional dietary notes/preferences: ${notes}.`;
+                p += " Please format the response clearly, using headings for meals and snacks, and bullet points for items within them.";
+                return p;
+            });
+        });
+
+        document.getElementById('getIllnessPreventionBtn').addEventListener('click', () => {
+            openContentModal('🛡️ Staying Safe from Illness when Travelling', 'customList');
+        });
+
+        document.getElementById('getMotivationBtn').addEventListener('click', () => {
+            openContentModal('✨ Race Day Motivation', 'api');
+            const prompt = "Write a short, powerful, and inspiring motivational message (2-4 sentences) for an athlete on the morning of their challenging trail race. Focus on their preparation, strength, the experience ahead, and the joy of running. Make it punchy and memorable.";
+            callGeminiApi(prompt);
+        });
+
+        document.getElementById('getImmediateRecoveryMealsBtn').addEventListener('click', () => {
+            openContentModal('✨ Immediate Post-Race Recovery Meal Ideas', 'api');
+            const prompt = "Suggest 3 distinct recovery meal ideas for an athlete immediately after completing a long and strenuous trail race. For each meal, briefly explain how it helps with restoring fluids, replenishing glycogen (aim for high carb), and providing protein for muscle repair (moderate to high protein). Ensure the meals are generally easy to digest and appealing post-exertion. Format with meal names as headings and bullet points for details.";
+            callGeminiApi(prompt);
+        });
+    </script>
+</body>
+</html>
